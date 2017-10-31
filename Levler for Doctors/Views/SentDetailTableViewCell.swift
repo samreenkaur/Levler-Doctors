@@ -9,7 +9,10 @@
 import UIKit
 
 class SentDetailTableViewCell: UITableViewCell {
-
+    @IBOutlet weak var name: UILabel!
+    @IBOutlet weak var contact: UILabel!
+    @IBOutlet weak var time: UILabel!
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code

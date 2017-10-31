@@ -13,11 +13,44 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+
+        let token = UserDefaults.standard.object(forKey: "token")
+        print("TOKEN: \(String(describing: token))")
+        
+        var a = true
+        if token != nil
+        {  a = true
+            
+        }
+        else
+        {
+            a = false
+        }
+        let isLoggedIn: Bool? = a // Get From user defaults
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        
+        if isLoggedIn! {
+            let homeViewController = storyboard.instantiateViewController(withIdentifier: "HomeViewController") as! HomeViewController
+            let navController: UINavigationController = UINavigationController(rootViewController: homeViewController)
+         
+
+            self.window?.rootViewController = navController
+            UINavigationBar.appearance().tintColor = UIColor.white
+            UINavigationBar.appearance().barStyle = .black
+            UINavigationBar.appearance().backgroundColor = UIColor.black
+        }
+        else {
+            let loginViewController = storyboard.instantiateViewController(withIdentifier: "viewController") as! ViewController
+            self.window?.rootViewController = loginViewController
+        }
+
         return true
+        
     }
+  
+    
 
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.

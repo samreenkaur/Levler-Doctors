@@ -9,7 +9,11 @@
 import UIKit
 
 class GoogleReviewTableViewCell: UITableViewCell {
-
+    @IBOutlet weak var gimg: UIImageView!
+    @IBOutlet weak var gname: UILabel!
+    @IBOutlet weak var grate: UILabel!
+    @IBOutlet weak var gdes: UILabel!
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code

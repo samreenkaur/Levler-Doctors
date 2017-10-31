@@ -9,7 +9,38 @@
 import UIKit
 
 class MenuViewController: UIViewController {
-
+    @IBAction func sentInviteButtonClicked(_ sender: Any) {
+        
+    }
+    
+    @IBAction func RateOurApp(_ sender: Any) {
+        openURL(urlStr: "itms-apps://itunes.apple.com/app/co.levler/levler/id1293043752")
+    }
+    
+    @IBAction func logout(_ sender: Any) {
+        print("LOGOUT SUCCESS")
+        //PFUSer.logout()
+        let defaultValues = UserDefaults.standard
+        
+        defaultValues.set(nil, forKey: "token")
+        let token = defaultValues.string(forKey: "token")
+        print(token as Any)
+        print("LOGIN AGAIN")
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let Login = storyboard.instantiateViewController(withIdentifier: "viewController")
+        self.present(Login, animated: true, completion: nil)
+      
+        
+    }
+    
+    
+    func openURL(urlStr:String!) {
+        
+        if let url = NSURL(string:urlStr) {
+            UIApplication.shared.open(url as URL, options: [:], completionHandler: nil)
+        }
+        
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
 

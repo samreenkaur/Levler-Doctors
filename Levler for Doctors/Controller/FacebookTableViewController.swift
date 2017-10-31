@@ -7,89 +7,188 @@
 //
 
 import UIKit
+import Alamofire
 
 class FacebookTableViewController: UITableViewController {
-
+    var spinner = UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge)
+    var loadingView: UIView = UIView()
+    
+    struct Fbreview {
+        let name : String
+        let rating : Int
+        // let imageURL : NSURL
+        let description : String?
+    }
+    var a = 0.0
+    var x = 0.0
+    
+    let rate2 = ["✩","✩","✩","✩","✩"]
+    let img2 = UIImage(named: "003-facebook")!
+    
+    
+    
+    var fbreview = [Fbreview]()
+    
+    func showActivityIndicator() {
+        
+        DispatchQueue.main.async {
+            self.loadingView = UIView()
+            self.loadingView.frame = CGRect(x: 0.0, y: 0.0, width: 100.0, height: 100.0)
+            self.loadingView.center = self.view.center
+            self.loadingView.backgroundColor = UIColor.lightGray
+            self.loadingView.alpha = 0.7
+            self.loadingView.clipsToBounds = true
+            self.loadingView.layer.cornerRadius = 10
+            
+            self.spinner = UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge)
+            self.spinner.frame = CGRect(x: 0.0, y: 0.0, width: 80.0, height: 80.0)
+            self.spinner.center = CGPoint(x:self.loadingView.bounds.size.width / 2, y:self.loadingView.bounds.size.height / 2)
+            
+            self.loadingView.addSubview(self.spinner)
+            self.view.addSubview(self.loadingView)
+            self.spinner.startAnimating()
+        }
+    }
+    
+    func hideActivityIndicator() {
+        DispatchQueue.main.async {
+            self.spinner.stopAnimating()
+            self.loadingView.removeFromSuperview()
+        }
+    }
+    
+    let noDataLabel: UILabel  = UILabel()
+    
+    func noData(){
+        DispatchQueue.main.async {
+            self.noDataLabel.frame  = CGRect(x: 0.0, y: 0.0, width: self.tableView.bounds.size.width, height: self.tableView.bounds.size.height)
+            self.noDataLabel.text          = "No facebook reviews yet"
+            self.noDataLabel.textColor     = UIColor.gray
+            self.noDataLabel.textAlignment = .center
+            self.tableView.backgroundView  = self.noDataLabel
+            self.tableView.separatorStyle  = .none
+        }
+    }
+    func dataExist(){
+        DispatchQueue.main.async {
+            self.noDataLabel.isHidden = true
+            self.tableView.separatorStyle  = .singleLine
+        }
+    }
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+        let defaultValues = UserDefaults.standard
+        let token = defaultValues.string(forKey: "token")
+        let Auth_header    = ["Authorization" : token]
+        showActivityIndicator()
+        
+        request("https://app.levler.co/api/v1/employe/facebook_reviews", method: .get, parameters: nil , encoding: JSONEncoding.default, headers: (Auth_header as? HTTPHeaders)).validate().responseJSON { response in
+            print("Facebook reviews: \(response.result)")
+            self.hideActivityIndicator()
+            
+            switch response.result {
+            case .success:
+                // print(response.result.value as Any)
+                let json: NSDictionary? = response.result.value as? NSDictionary
+                if let jsonArray : NSArray = json!["message"] as? NSArray{
+                    // print(jsonArray)
+                    for element in jsonArray {
+                        let jsonData = element as! NSDictionary
+                        //getting user values
+                        let name = jsonData.value(forKey: "name") as! String
+                        let rating = jsonData.value(forKey: "rating") as! Int
+                        let des: String? = jsonData.value(forKey: "comment") as? String
+                        // let src = jsonData.value(forKey: "src") as! String
+                        let review = Fbreview(name: name, rating: rating, description:des)
+                        self.fbreview.append(review)
+                        self.tableView.reloadData()
+                        
+                    }
+                    self.tableView.reloadData()
+                }
+                else {
+                    self.noData()
+                }
+                
+            //switching the screen
+            case .failure:
+                self.noData()
+            }
+        }
     }
-
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+        
+        //   tableView.delegate = self
+        //   tableView.dataSource = self
     }
-
-    // MARK: - Table view data source
-
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
-        return 0
+        return 1
     }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return 0
+    override public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int
+        
+    {
+        return fbreview.count
     }
-
-    /*
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-        // Configure the cell...
-
+    
+    
+    override public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell
+    {
+        let cell = self.tableView.dequeueReusableCell(withIdentifier: "fbreviewcell", for: indexPath) as! FacebookReviewTableViewCell
+        let review = fbreview[indexPath.row]
+        
+        //rating
+        var rates: [String] = rate2
+        for i in 0...(review.rating-1)
+        {
+            rates[i] = "★"
+        }
+        let rateArray = rates.flatMap { String.CharacterView($0) }
+        
+        let rateString = String(rateArray)
+        
+        dataExist()
+        cell.fimg?.image = img2
+        cell.fname?.text = review.name
+        cell.frate?.text = rateString
+        cell.fdes?.text = review.description
+        cell.fdes.sizeToFit()
+        if (cell.fname.text == "No facebook reviews yet")
+        {
+            cell.fimg.isHidden = true
+            cell.frate.isHidden = true
+            cell.fname.textColor = UIColor.lightGray
+            cell.fname.textAlignment = NSTextAlignment.left
+            
+        }
+        //  cell.readmore.isHidden = true
+        
+        a = Double(cell.fdes.frame.height)
+        
+        x = 120 + a
+        
+        
         return cell
+        
     }
-    */
-
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
+    
+    
+    // MARK: - Table view data source
+    
+    
+    override func tableView(_ tableView: UITableView,heightForRowAt indexPath:IndexPath) -> CGFloat
+    {
+        
+        return CGFloat(x)
     }
-    */
-
-    /*
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat
+    {
+        return 140
     }
-    */
-
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
+    
 }
+
